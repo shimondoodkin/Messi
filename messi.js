@@ -1,6 +1,7 @@
+
 /*
  * jQuery Messi Plugin 1.2
- * https://github.com/marcosesperon/jquery-messi
+ * https://github.com/marcosesperon/Messi
  *
  * Copyright 2012, Marcos Esperón
  * http://marcosesperon.es
@@ -15,6 +16,12 @@ function Messi(data, options) {
   var _this = this;
   _this.options = jQuery.extend({}, Messi.prototype.options, options || {});
   
+  if(_this.options.closeButton===undefined)
+  {
+    _this.options.closeButton=_this.options.closeButton_default;
+    _this.options.closeButton=_this.options.closeButton && (_this.options.buttons.length === 0 && _this.options.title == null && !_this.options.autoclose)
+  }
+    
   // preparamos el elemento
   _this.messi = jQuery(_this.template);
   _this.setContent(data);
@@ -51,21 +58,20 @@ function Messi(data, options) {
   
   // preparamos los botones
   if(_this.options.buttons.length > 0) {
-  
+    
+    var btnboxwidth=Math.round(100/_this.options.buttons.length)+'%';    
     for (var i = 0; i < _this.options.buttons.length; i++) {
       
       var cls = (_this.options.buttons[i].btnClass) ? _this.options.buttons[i].btnClass : '';
       var val = (_this.options.buttons[i].val) ? _this.options.buttons[i].val : '';
-      var btn = jQuery('<td class="btnbox"><button class="btn ' + cls + '" href="#">' + _this.options.buttons[i].label + '</button></td>').data('value', val);
+      var btn = jQuery('<div class="btnbox" style="float:left;width:'+btnboxwidth+';"><button class="btn ' + cls + '" href="#">' + _this.options.buttons[i].label + '</button></div>').data('value', val);
       btn.bind('click', function() {
         var value = jQuery.data(this, 'value');
         var after = (_this.options.callback != null) ? function() { _this.options.callback(value); } : null;
         _this.hide(after);
       });
     
-      jQuery('.messi-actions-data', this.messi).append(btn);
-    
-    };
+      jQuery('.messi-actions', this.messi).append(btn);    };
   
   } else {
   
@@ -74,19 +80,17 @@ function Messi(data, options) {
   };
   
   // preparamos el botón de cerrar automáticamente
-  if(_this.options.buttons.length === 0 && _this.options.title == null && !_this.options.autoclose) {
+ // if(_this.options.buttons.length === 0 && _this.options.title == null && !_this.options.autoclose) {
     
-    if(_this.options.closeButton) {
+  if(_this.options.closeButton) {
       var close = jQuery('<span class="messi-closebtn"></span>');
       close.bind('click', function() {
         _this.hide();
       });
-      
-      jQuery('.messi-content', this.messi).prepend(close);
-      
-    };
-    
+      jQuery('.messi-content', this.messi).prepend(close);    
   };
+    
+  //};
   
   // activamos la pantalla modal
   _this.modal = (_this.options.modal) ? jQuery('<div class="messi-modal"></div>').css({opacity: _this.options.modalOpacity, width: jQuery(document).width(), height: jQuery(document).height(), 'z-index': _this.options.zIndex + jQuery('.messi').length}).appendTo(document.body) : null;
@@ -115,7 +119,8 @@ Messi.prototype = {
     buttons: [],                             // array of buttons, i.e: [{id: 'ok', label: 'OK', val: 'OK'}]
     callback: null,                          // callback function after close message
     center: true,                            // center message on screen
-    closeButton: true,                       // show close button in header title (or content if buttons array is empty).
+    closeButton: undefined,                       // show close button in header title (or content if buttons array is empty).
+    closeButton_default: true,                       // show close button in header title (or content if buttons array is empty).
     height: 'auto',                          // content height
     title: null,                             // message title
     titleClass: null,                        // title style: info, warning, success, error
@@ -128,7 +133,7 @@ Messi.prototype = {
     width: '500px',                          // message width
     zIndex: 99999                            // message z-index
   },
-  template: '<div class="messi"><div class="messi-box"><div class="messi-wrapper"><div class="messi-titlebox"><span class="messi-title"></span></div><div class="messi-content"></div><div class="messi-footbox"><table width="100%" cellpadding=0 cellspacing=0 border=0 class="messi-actions"><tr class="messi-actions-data"><tr></table></div></div></div></div>',
+  template: '<div class="messi"><div class="messi-box"><div class="messi-wrapper"><div class="messi-titlebox"><span class="messi-title"></span></div><div class="messi-content"></div><div class="messi-footbox"><div class="messi-actions"></div></div></div></div></div>',
   content: '<div></div>',
   visible: false,
     
@@ -197,7 +202,7 @@ Messi.prototype = {
   
   unload: function() {
     if (this.visible) this.hide();
-    jQuery(window).unbind('resize', function () { this.resize(); }());
+    jQuery(window).unbind('resize', function () { if( this.resize)this.resize(); }());
     this.messi.remove();
   }
 
@@ -248,7 +253,7 @@ jQuery.extend(Messi, {
     
     }).error(function() {
     
-      console.log('Error loading ' + src);
+      if(console)console.log('Error loading ' + src);
     
     }).attr('src', src);
       
@@ -263,7 +268,7 @@ jQuery.extend(Messi, {
       dataType: 'html',
       cache: false,
       error: function (request, status, error) {
-        console.log(request.responseText);
+        if(console)console.log(request.responseText);
       },
       success: function(html) {
         new Messi(html, options);
